@@ -1,4 +1,5 @@
 import random
+import seaborn as sns
 
 
 class Academia:
@@ -12,6 +13,9 @@ class Academia:
     
     def listar_halteres(self):
         return [i for i in self.porta_halteres.values() if i != 0]
+    
+    def listar_espacos(self):
+        return [i for i, j in self.porta_halteres.items() if j == 0]
     
     def pegar_halteres(self, peso):
         if peso in self.porta_halteres and self.porta_halteres[peso] != 0:
@@ -35,3 +39,60 @@ class Academia:
     def calcular_caos(self):
         num_caos = [i for i, j in self.porta_halteres.items() if i != j]
         return len(num_caos) / len(self.halteres) * 100
+
+
+class Usuario:
+    def __init__(self, tipo, academia):
+        self.tipo = tipo
+        self.academia = academia
+        self.peso = 0
+    
+    
+    def iniciar_treino(self):
+        lista_pesos = self.academia.listar_halteres()
+        self.peso = random.choice(lista_pesos)
+        self.academia.pegar_halteres(self.peso)
+    
+    
+    def finalizar_treino(self):
+        espacos = self.academia.listar_espacos()
+        if self.tipo == 1:
+            if self.peso in espacos:
+                self.academia.devolver_halter(self.peso, self.peso)
+            else:
+                if espacos:
+                    pos = random.choice(espacos)
+                    self.academia.devolver_halter(pos, self.peso)
+                else:
+                    # lidar com o caso de lista vazia, ex: mostrar mensagem ou tomar outra ação
+                    # print("Não há espaços disponíveis para escolha.")
+                    pass
+        elif self.tipo == 2:
+            if espacos:
+                pos = random.choice(espacos)
+                self.academia.devolver_halter(pos, self.peso)
+            else:
+                # lidar com o caso de lista vazia, ex: mostrar mensagem ou tomar outra ação
+                # print("Não há espaços disponíveis para escolha.")
+                pass
+        self.peso = 0
+
+
+academia = Academia()
+# usuarios = [Usuario(random.choice([1, 2]), academia) for _ in range(10)]
+usuarios = [Usuario(1, academia) for i in range(10)]
+usuarios += [Usuario(2, academia) for i in range(1)]
+list_chaos = []
+for k in range(50):
+    academia.reiniciar_o_dia()
+    for i in range(10):
+        random.shuffle(usuarios)
+        for usuario in usuarios:
+            usuario.iniciar_treino()
+        for usuario in usuarios:
+            usuario.finalizar_treino()
+    list_chaos.append(academia.calcular_caos())
+    print(f'Dia {k+1}: {academia.calcular_caos():.2f}%')
+print(f'Média de caos: {sum(list_chaos)/len(list_chaos):.2f}%')
+gra = sns.histplot(list_chaos)
+gra.figure.savefig('caos.png')
